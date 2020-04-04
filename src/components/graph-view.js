@@ -228,11 +228,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
       this.renderView({
         // without initialBBox, we hide then render the entities
         // then zoom after rendering. upon zoom completion, we show the entities in handleZoomEnd
-        beforeRender: () => {
-          if (this.entities) {
-            this.entities.style.visibility = 'hidden';
-          }
-        },
+        beforeRender: () => {},
         afterRender: () => {
           requestAnimationFrame(() => {
             if (this.viewWrapper.current != null) {
@@ -1075,11 +1071,6 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
     // mark zooming indicators as complete
     if (this.wheelState.zooming === true) {
       this.wheelState.zooming = false;
-    }
-
-    // display hidden entity elements
-    if (this.entities && this.entities.style.visibility === 'hidden') {
-      this.entities.style.visibility = 'visible';
     }
 
     if (!draggingEdge || !draggedEdge) {
