@@ -157,7 +157,6 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
     // these track pan, wheel
     this.panState = { panning: false, requestId: null };
     this.wheelState = { zooming: false, requestId: null, deltaX: 0, deltaY: 0 };
-    this.initialZoomInProgress = true;
 
     this.nodeTimeouts = {};
     this.edgeTimeouts = {};
@@ -1078,13 +1077,9 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
       this.wheelState.zooming = false;
     }
 
-    if (this.initialZoomInProgress) {
-      this.initialZoomInProgress = false;
-
-      // display hidden entity elements
-      if (this.entities && this.entities.style.visibility === 'hidden') {
-        this.entities.style.visibility = 'visible';
-      }
+    // display hidden entity elements
+    if (this.entities && this.entities.style.visibility === 'hidden') {
+      this.entities.style.visibility = 'visible';
     }
 
     if (!draggingEdge || !draggedEdge) {
@@ -1703,7 +1698,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
   }
 
   handlePanWheel = (event: any) => {
-    if (!this.props.panOnWheel || this.initialZoomInProgress) {
+    if (!this.props.panOnWheel || !this.state.viewTransform) {
       return;
     }
 
@@ -1744,7 +1739,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
   };
 
   handlePanStart = (event: any) => {
-    if (!this.props.panOnDrag || this.initialZoomInProgress) {
+    if (!this.props.panOnDrag || !this.state.viewTransform) {
       return;
     }
 
