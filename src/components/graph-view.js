@@ -1730,6 +1730,21 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
       return;
     }
 
+    const isTouchPad = event.wheelDeltaY
+      ? event.wheelDeltaY !== -3 * event.deltaY
+      : event.deltaMode !== 0;
+
+    const scaleFactor = isTouchPad ? 0.05 : 0.01;
+
+    // also works with the touchpad
+    const isZooming = event.ctrlKey;
+
+    const zoom = isZooming
+      ? (event.deltaY > 0
+          ? Math.min(event.deltaY, 3)
+          : Math.max(event.deltaY, -3)) * -scaleFactor
+      : 0;
+
     // don't allow pan / wheel to affect document
     event.stopPropagation();
     event.stopImmediatePropagation();
@@ -1755,7 +1770,14 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
           deltaY: 0,
         };
 
-        this.setZoom(viewTransform.k || 1, offX, offY, 0);
+        if (isZooming) {
+          this.setDiscreteZoom(viewTransform.k * (1 + zoom), 0, [
+            event.x,
+            event.y,
+          ]);
+        } else {
+          this.setZoom(viewTransform.k || 1, offX, offY, 0);
+        }
       });
     }
 
@@ -1858,7 +1880,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
     this.setZoom(next.k, next.x, next.y, this.props.zoomDur);
   }
 
-  panToNode(id: string, zoom?: boolean = false) {
+  panToNode(id: string, zoom?: boolean) {
     if (!this.entities) {
       return;
     }
@@ -1868,7 +1890,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
     this.panToEntity(node, zoom);
   }
 
-  panToEdge(source: string, target: string, zoom?: boolean = false) {
+  panToEdge(source: string, target: string, zoom?: boolean) {
     if (!this.entities) {
       return;
     }
