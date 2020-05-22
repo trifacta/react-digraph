@@ -79,6 +79,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
     panOnDrag: true,
     panOrDragWithCtrlMetaKey: true,
     panOnWheel: true,
+    zoomOnWheel: true,
   };
 
   static getDerivedStateFromProps(
@@ -1239,7 +1240,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
   handleZoomToFitImpl = (viewBBox: IBBox, zoomDur: number = 0) => {
     const next = this.computeZoom(viewBBox);
 
-    this.setZoom(next.k, next.x, next.y, zoomDur);
+    this.zoomAndTranslate(next.k, next.x, next.y, zoomDur);
   };
 
   // Updates current viewTransform with some delta
@@ -1283,13 +1284,18 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
 
     next.x += center.x - l.x + modX;
     next.y += center.y - l.y + modY;
-    this.setZoom(next.k, next.x, next.y, dur);
+    this.zoomAndTranslate(next.k, next.x, next.y, dur);
 
     return true;
   };
 
   // Programmatically resets zoom
-  setZoom(k: number = 1, x: number = 0, y: number = 0, dur: number = 0) {
+  zoomAndTranslate(
+    k: number = 1,
+    x: number = 0,
+    y: number = 0,
+    dur: number = 0
+  ) {
     if (!this.viewWrapper.current) {
       return;
     }
@@ -1303,7 +1309,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
       .call(this.zoom.transform, t);
   }
 
-  setDiscreteZoom(k: number = 1, dur: number = 0, point: array) {
+  zoomToPoint(k: number = 1, dur: number = 0, point: array) {
     if (!this.viewWrapper.current) {
       return;
     }
@@ -1730,14 +1736,11 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
       return;
     }
 
-    const isTouchPad = event.wheelDeltaY
-      ? event.wheelDeltaY !== -3 * event.deltaY
-      : event.deltaMode !== 0;
+    const scaleFactor = 0.05;
 
-    const scaleFactor = isTouchPad ? 0.05 : 0.01;
-
-    // also works with the touchpad
-    const isZooming = event.ctrlKey;
+    // event.ctrlKey also indicates that user is using pinch and zoom with the touchpad
+    const isZooming =
+      this.props.zoomOnWheel && (event.ctrlKey || event.metaKey);
 
     const zoom = isZooming
       ? (event.deltaY > 0
@@ -1771,12 +1774,9 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
         };
 
         if (isZooming) {
-          this.setDiscreteZoom(viewTransform.k * (1 + zoom), 0, [
-            event.x,
-            event.y,
-          ]);
+          this.zoomToPoint(viewTransform.k * (1 + zoom), 0, [event.x, event.y]);
         } else {
-          this.setZoom(viewTransform.k || 1, offX, offY, 0);
+          this.zoomAndTranslate(viewTransform.k || 1, offX, offY, 0);
         }
       });
     }
@@ -1831,7 +1831,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
         requestId: null,
       };
 
-      this.setZoom(viewTransform.k || 1, offX, offY, 0);
+      this.zoomAndTranslate(viewTransform.k || 1, offX, offY, 0);
     });
   };
 
@@ -1877,7 +1877,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
     next.x = width / 2 - next.k * x;
     next.y = height / 2 - next.k * y;
 
-    this.setZoom(next.k, next.x, next.y, this.props.zoomDur);
+    this.zoomAndTranslate(next.k, next.x, next.y, this.props.zoomDur);
   }
 
   panToNode(id: string, zoom?: boolean) {
