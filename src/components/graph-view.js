@@ -64,7 +64,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
     onPanDragEnd: () => {},
     onZoomStart: () => {},
     onZoomEnd: () => {},
-    deleteEnititiesTimeOut: 200,
+    deleteEntitiesTimeOut: 200,
     edgeArrowSize: 8,
     gridSpacing: 36,
     maxZoom: 1.5,
@@ -422,7 +422,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
 
       setTimeout(
         () => GraphUtils.removeElementFromDom(this.entities, nodeIdToRemove),
-        this.props.deleteEnititiesTimeOut
+        this.props.deleteEntitiesTimeOut
       );
       // The animation frame avoids a race condition
       requestAnimationFrame(() => {
