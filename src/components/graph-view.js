@@ -1092,7 +1092,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
     const { nodeKey, onZoomEnd } = this.props;
 
     // call on zoom end in the next animation frame
-    requestAnimationFrame(() => onZoomEnd(viewTransform));
+    requestAnimationFrame(() => onZoomEnd({ ...viewTransform }));
 
     // mark zooming indicators as complete
     if (this.wheelState.zooming === true) {
@@ -1871,7 +1871,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
     }
 
     this.panState = { clientX, clientY, requestId: null, panning: true };
-    this.props.onPanDragStart();
+    this.props.onPanDragStart({ ...this.state.viewTransform });
   };
 
   handlePanDrag = (event: any) => {
@@ -1905,7 +1905,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
   handlePanEnd = () => {
     if (this.panState.panning) {
       this.panState.panning = false;
-      this.props.onPanDragEnd();
+      this.props.onPanDragEnd({ ...this.state.viewTransform });
     }
   };
 
