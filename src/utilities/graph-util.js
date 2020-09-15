@@ -96,6 +96,10 @@ class GraphUtils {
   }
 
   static removeElementFromDom(element: any, id: string) {
+    if (!element) {
+      return;
+    }
+
     const container = element.querySelector(`#${id}`);
 
     if (container && container.parentNode) {
