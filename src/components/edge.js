@@ -29,6 +29,7 @@ export type IEdge = {
   type?: string,
   className?: string,
   handleText?: string,
+  handleElement?: any,
   handleTooltipText?: string,
   label_from?: string,
   label_to?: string,
@@ -663,6 +664,17 @@ class Edge extends React.Component<IEdgeProps> {
     );
   }
 
+  renderHandleElement(data) {
+    return (
+      <foreignObject
+        className="edge-element"
+        transform={`${this.getEdgeHandleTranslation()}`}
+      >
+        {data.handleElement}
+      </foreignObject>
+    );
+  }
+
   renderLabelText(data: any) {
     const [rotation, isRotated] = this.getEdgeHandleRotation();
     const title = isRotated
@@ -716,6 +728,7 @@ class Edge extends React.Component<IEdgeProps> {
             style={{ transform: edgeHandleTransformation }}
           />
           {data.handleText && this.renderHandleText(data)}
+          {data.handleElement && this.renderHandleElement(data)}
           {data.label_from && data.label_to && this.renderLabelText(data)}
         </g>
         <g className="edge-mouse-handler">
