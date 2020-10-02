@@ -18,14 +18,21 @@
 import None from './none';
 import SnapToGrid from './snap-to-grid';
 import VerticalTree from './vertical-tree';
+import VerticalOrderedTree from './vertical-ordered-tree';
 import HorizontalTree from './horizontal-tree';
 
-export type LayoutEngine = None | SnapToGrid | VerticalTree | HorizontalTree;
+export type LayoutEngine =
+  | None
+  | SnapToGrid
+  | VerticalTree
+  | HorizontalTree
+  | VerticalOrderedTree;
 
 const LayoutEngines = {
   None,
   SnapToGrid,
   VerticalTree,
+  VerticalOrderedTree,
   HorizontalTree,
 };
 
