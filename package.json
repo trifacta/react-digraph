@@ -40,7 +40,8 @@
     "react-addons-shallow-compare": "^15.6.2",
     "react-draggable": "^3.3.2",
     "svg-intersections": "^0.4.0",
-    "web-worker": "^1.0.0"
+    "web-worker": "^1.0.0",
+    "webcola": "3.4.0"
   },
   "devDependencies": {
     "@fortawesome/fontawesome-free": "^5.7.2",
