@@ -161,7 +161,6 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
     this.graphSvg = React.createRef();
 
     this.state = {
-      mounted: false,
       firstAdjustment: false,
       ownUpdate: false,
       adjusted: false,
@@ -184,11 +183,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
   }
 
   componentDidMount() {
-    if (!this.state.mounted) {
-      this.setState({
-        mounted: true,
-      });
-    }
+    return this.layoutGraph(this.props, this.state);
   }
 
   onInitialRender() {
@@ -281,10 +276,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
       !nextState.componentUpToDate ||
       nextProps.selected !== this.props.selected ||
       nextProps.readOnly !== this.props.readOnly ||
-      nextProps.layoutEngine !== this.props.layoutEngine ||
-      nextState.adjusted !== this.state.adjusted ||
-      nextState.mounted !== this.state.mounted ||
-      nextState.firstAdjustment !== this.state.firstAdjustment
+      nextProps.layoutEngine !== this.props.layoutEngine
     ) {
       return true;
     }
@@ -296,6 +288,10 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
     prevProps: IGraphViewProps,
     prevState: IGraphViewState
   ) {
+    return this.layoutGraph(prevProps, prevState);
+  }
+
+  async layoutGraph(prevProps: IGraphViewProps, prevState: IGraphViewState) {
     const {
       edges,
       nodesMap,
@@ -306,12 +302,10 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
     } = this.state;
     const { layoutEngine } = this.props;
 
-    const forceReRender = prevProps.layoutEngine !== layoutEngine;
+    const forceReRender =
+      prevProps.layoutEngine !== layoutEngine || !this.state.firstAdjustment;
 
-    if (
-      (forceReRender || (prevState.mounted === false && this.state.mounted)) &&
-      layoutEngine
-    ) {
+    if (forceReRender && layoutEngine) {
       const newNodes = await layoutEngine.adjustNodes(nodes, nodesMap);
 
       this.setState({
