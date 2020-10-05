@@ -276,7 +276,8 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
       !nextState.componentUpToDate ||
       nextProps.selected !== this.props.selected ||
       nextProps.readOnly !== this.props.readOnly ||
-      nextProps.layoutEngine !== this.props.layoutEngine
+      nextProps.layoutEngine !== this.props.layoutEngine ||
+      nextState.firstAdjustment !== this.state.firstAdjustment
     ) {
       return true;
     }
