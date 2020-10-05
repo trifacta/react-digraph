@@ -28,6 +28,7 @@ import GraphControls from './graph-controls';
 import GraphUtils, { type INodeMapNode } from '../utilities/graph-util';
 import Node, { type INode, type IPoint } from './node';
 import type { IInitialPosition, IBBox } from './graph-view-props';
+import shallowCompare from 'react-addons-shallow-compare';
 
 type IViewTransform = {
   k: number,
@@ -85,24 +86,17 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
   };
 
   static getDerivedStateFromProps(
-    nextProps: IGraphViewProps,
-    prevState: IGraphViewState
+    props: IGraphViewProps,
+    state: IGraphViewState
   ) {
-    const { edges, nodeKey } = nextProps;
-    let nodes = nextProps.nodes;
+    const { edges, nodeKey } = props;
+    const nodes = props.nodes;
     const nodesMap = GraphUtils.getNodesMap(nodes, nodeKey);
     const edgesMap = GraphUtils.getEdgesMap(edges);
 
     GraphUtils.linkNodesAndEdges(nodesMap, edges);
 
-    // Handle layoutEngine on initial render
-    if (prevState.nodes.length === 0 && nextProps.layoutEngine) {
-      const newNodes = nextProps.layoutEngine.adjustNodes(nodes, nodesMap);
-
-      nodes = newNodes;
-    }
-
-    const nextSelected = nextProps.selected || [];
+    const nextSelected = props.selected || [];
 
     const { selectedNodes, selectedEdges } = nextSelected.reduce(
       (memo, nodeKey) => {
@@ -124,12 +118,14 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
     );
 
     const nextState = {
+      firstAdjustment: state.firstAdjustment,
+      adjusted: state.adjusted && shallowCompare(nodes, state.nodes),
       componentUpToDate: true,
       edges,
       edgesMap,
       nodes,
       nodesMap,
-      readOnly: nextProps.readOnly,
+      readOnly: props.readOnly,
       selectedEdges,
       selectedNodes,
     };
@@ -165,6 +161,9 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
     this.graphSvg = React.createRef();
 
     this.state = {
+      firstAdjustment: false,
+      ownUpdate: false,
+      adjusted: false,
       componentUpToDate: false,
       draggedEdge: null,
       draggingEdge: false,
@@ -184,6 +183,10 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
   }
 
   componentDidMount() {
+    return this.layoutGraph(this.props, this.state);
+  }
+
+  onInitialRender() {
     const { initialBBox, initialPosition, minZoom, maxZoom } = this.props;
 
     if (!this.props.disableGraphKeyHandlers) {
@@ -273,7 +276,8 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
       !nextState.componentUpToDate ||
       nextProps.selected !== this.props.selected ||
       nextProps.readOnly !== this.props.readOnly ||
-      nextProps.layoutEngine !== this.props.layoutEngine
+      nextProps.layoutEngine !== this.props.layoutEngine ||
+      nextState.firstAdjustment !== this.state.firstAdjustment
     ) {
       return true;
     }
@@ -281,8 +285,16 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
     return false;
   }
 
-  componentDidUpdate(prevProps: IGraphViewProps, prevState: IGraphViewState) {
+  async componentDidUpdate(
+    prevProps: IGraphViewProps,
+    prevState: IGraphViewState
+  ) {
+    return this.layoutGraph(prevProps, prevState);
+  }
+
+  async layoutGraph(prevProps: IGraphViewProps, prevState: IGraphViewState) {
     const {
+      edges,
       nodesMap,
       edgesMap,
       nodes,
@@ -291,14 +303,20 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
     } = this.state;
     const { layoutEngine } = this.props;
 
-    const forceReRender = prevProps.layoutEngine !== layoutEngine;
+    const forceReRender =
+      prevProps.layoutEngine !== layoutEngine || !this.state.firstAdjustment;
 
     if (forceReRender && layoutEngine) {
-      const newNodes = layoutEngine.adjustNodes(nodes, nodesMap);
+      const newNodes = await layoutEngine.adjustNodes(nodes, nodesMap);
 
       this.setState({
         nodes: newNodes,
+        adjusted: false,
       });
+    }
+
+    if (!this.state.firstAdjustment) {
+      this.onInitialRender();
     }
 
     // Note: the order is intentional
@@ -310,7 +328,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
 
     // add new nodes
     this.addNewNodes(
-      this.state.nodes,
+      nodes,
       prevState.nodesMap,
       selectedNodes,
       prevState.selectedNodes,
@@ -319,7 +337,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
 
     // add new edges
     this.addNewEdges(
-      this.state.edges,
+      edges,
       prevState.edgesMap,
       selectedEdges,
       prevState.selectedEdges,
@@ -328,6 +346,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
 
     this.setState({
       componentUpToDate: true,
+      firstAdjustment: true,
     });
   }
 
@@ -1198,7 +1217,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
       next.k = position.k;
     }
 
-    /* 
+    /*
     If the initial position should be aligned with the entities rather than the graph, need to account for where the entities are positioned (subtract bbox)
     Also need to adjust for the scale of the graph
     */
@@ -1768,7 +1787,12 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
 
     return (
       <div className="view-wrapper" ref={this.viewWrapper}>
-        <svg className="graph" ref={this.graphSvg}>
+        <svg
+          data-ts="graph"
+          className="graph"
+          ref={this.graphSvg}
+          data-adjusted={this.state.firstAdjustment}
+        >
           <Defs
             edgeArrowSize={edgeArrowSize}
             gridSpacing={gridSpacing}
