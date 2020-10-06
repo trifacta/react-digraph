@@ -714,6 +714,7 @@ class Edge extends React.Component<IEdgeProps> {
         className="edge-container"
         data-source={data.source}
         data-target={data.target}
+        data-type={data.type}
       >
         <g className={className}>
           <path
